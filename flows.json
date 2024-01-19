@@ -1,0 +1,254 @@
+[
+    {
+        "id": "526b95cf1094716a",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "30e5d1fcd68f080e",
+        "type": "http in",
+        "z": "526b95cf1094716a",
+        "name": "",
+        "url": "/css",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 80,
+        "y": 80,
+        "wires": [
+            [
+                "726cb4f6ad6ac6fd"
+            ]
+        ]
+    },
+    {
+        "id": "726cb4f6ad6ac6fd",
+        "type": "template",
+        "z": "526b95cf1094716a",
+        "name": "css",
+        "field": "payload",
+        "fieldType": "msg",
+        "format": "css",
+        "syntax": "mustache",
+        "template": ".bodyContainer {\n    padding: 0 !important;\n    top: 50vh !important;\n    left: 50vw !important;\n    transform: translate(-50%, -50%);\n}\n\n.logoText span {\n    font-size: 30px !important;\n    text-align: center !important;\n}\n\n.logoText span::first-letter {\n    font-size: 50px !important;\n}\n\n.scrapeButton span {\n    color: white !important;\n}\n",
+        "output": "str",
+        "x": 210,
+        "y": 80,
+        "wires": [
+            [
+                "77fce1906ee6548b"
+            ]
+        ]
+    },
+    {
+        "id": "77fce1906ee6548b",
+        "type": "http response",
+        "z": "526b95cf1094716a",
+        "name": "",
+        "statusCode": "",
+        "headers": {
+            "content-type": "text/css"
+        },
+        "x": 330,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "4a82a5758911bde2",
+        "type": "http in",
+        "z": "526b95cf1094716a",
+        "name": "",
+        "url": "/scrapeIt",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 100,
+        "y": 220,
+        "wires": [
+            [
+                "9caa7218666323f8",
+                "d445fdab5ef58420",
+                "7c3a18085d0b1d8a"
+            ]
+        ]
+    },
+    {
+        "id": "9caa7218666323f8",
+        "type": "function",
+        "z": "526b95cf1094716a",
+        "name": "",
+        "func": "msg.old = msg.payload;\nmsg.url = msg.payload.link.trim();\n\nreturn msg;\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [
+            {
+                "var": "objectid",
+                "module": "objectid"
+            }
+        ],
+        "x": 300,
+        "y": 220,
+        "wires": [
+            [
+                "808693f37082f4f8",
+                "2a5e1fb1c835c9c9"
+            ]
+        ]
+    },
+    {
+        "id": "d445fdab5ef58420",
+        "type": "http response",
+        "z": "526b95cf1094716a",
+        "name": "scrapeIt",
+        "statusCode": "",
+        "headers": {},
+        "x": 300,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "808693f37082f4f8",
+        "type": "http request",
+        "z": "526b95cf1094716a",
+        "name": "Get Link Info",
+        "method": "GET",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 470,
+        "y": 220,
+        "wires": [
+            [
+                "fdb93efc2907d2d2",
+                "12e6cd0f8ab66e26"
+            ]
+        ]
+    },
+    {
+        "id": "fdb93efc2907d2d2",
+        "type": "function",
+        "z": "526b95cf1094716a",
+        "name": "Scrape",
+        "func": "const { JSDOM } = jsdom;\nconst html = msg.payload;\nconst dom = new JSDOM(`${html}`);\n\ndom.window.document.querySelectorAll('style').forEach(link => {\n    link.remove();\n});\ndom.window.document.querySelectorAll('script').forEach(link => {\n    link.remove();\n});\n\nconst document = dom.window.document;\nconst pageText = document.body.textContent;\n\nmsg.text = pageText;\n\nlet table = dom.window.document.querySelector('table');\nlet ckeckTable = table?.textContent ? true : false;\n\nif (ckeckTable) {\n    const headers = Array.from(table.querySelectorAll('tr:first-child th, tr:first-child td')).map(td => {\n        const text = td.textContent.trim();\n        return text !== \"\" ? text : undefined;\n    }).filter(Boolean);\n\n    const rows = Array.from(table.querySelectorAll('tr:not(:first-child)'));\n    const tableData = rows.map(row => {\n        const rowData = Array.from(row.querySelectorAll('td')).map(td => td.textContent.trim());\n        return Object.fromEntries(headers.map((header, index) => [header, rowData[index]]));\n    });\n\n    // let tables = JSON.stringify(tableData);\n    // node.warn(tables)\n    // msg.pageContent = pageText + '\\n\\n' + tables;\n} else {\n     msg.pageContent = pageText;\n}\n\nconst MAX_LENGTH = 500;\n\nmsg.result = [];\nlet currentParagraph = '';\n\nconst sentences = msg.pageContent.replace(/\\s+/g, ' ').split(/([.?!])+/).filter(sentence => sentence.trim() !== '');\n\nfor (const sentence of sentences) {\n    if (currentParagraph.length + sentence.length <= MAX_LENGTH) {\n        currentParagraph += sentence;\n    } else {\n        msg.result.push(currentParagraph.trim());\n        currentParagraph = sentence;\n    }\n}\n\nif (currentParagraph.trim() !== '') {\n    msg.result.push(currentParagraph.trim());\n}\n\nmsg.payload = {\n    ...msg.old,\n    text: msg.result,\n}\n\nmsg.url = env.get(\"nodered\") + `/createVector`;\n\nreturn msg;\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [
+            {
+                "var": "jsdom",
+                "module": "jsdom"
+            }
+        ],
+        "x": 640,
+        "y": 220,
+        "wires": [
+            [
+                "4fdb0b65fc9b38af",
+                "caf650b921c5d429"
+            ]
+        ]
+    },
+    {
+        "id": "4fdb0b65fc9b38af",
+        "type": "http request",
+        "z": "526b95cf1094716a",
+        "name": "",
+        "method": "POST",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 810,
+        "y": 220,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "7c3a18085d0b1d8a",
+        "type": "debug",
+        "z": "526b95cf1094716a",
+        "name": "debug 1",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 140,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "2a5e1fb1c835c9c9",
+        "type": "debug",
+        "z": "526b95cf1094716a",
+        "name": "debug 2",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 320,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "12e6cd0f8ab66e26",
+        "type": "debug",
+        "z": "526b95cf1094716a",
+        "name": "debug 3",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 500,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "caf650b921c5d429",
+        "type": "debug",
+        "z": "526b95cf1094716a",
+        "name": "debug 4",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 660,
+        "y": 260,
+        "wires": []
+    }
+]
