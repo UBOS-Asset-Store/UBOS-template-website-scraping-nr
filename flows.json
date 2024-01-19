@@ -66,12 +66,10 @@
         "upload": false,
         "swaggerDoc": "",
         "x": 100,
-        "y": 220,
+        "y": 160,
         "wires": [
             [
-                "9caa7218666323f8",
-                "d445fdab5ef58420",
-                "7c3a18085d0b1d8a"
+                "9caa7218666323f8"
             ]
         ]
     },
@@ -91,12 +89,11 @@
                 "module": "objectid"
             }
         ],
-        "x": 300,
-        "y": 220,
+        "x": 280,
+        "y": 160,
         "wires": [
             [
-                "808693f37082f4f8",
-                "2a5e1fb1c835c9c9"
+                "808693f37082f4f8"
             ]
         ]
     },
@@ -107,8 +104,8 @@
         "name": "scrapeIt",
         "statusCode": "",
         "headers": {},
-        "x": 300,
-        "y": 180,
+        "x": 780,
+        "y": 160,
         "wires": []
     },
     {
@@ -127,12 +124,11 @@
         "authType": "",
         "senderr": false,
         "headers": [],
-        "x": 470,
-        "y": 220,
+        "x": 450,
+        "y": 160,
         "wires": [
             [
-                "fdb93efc2907d2d2",
-                "12e6cd0f8ab66e26"
+                "fdb93efc2907d2d2"
             ]
         ]
     },
@@ -141,7 +137,7 @@
         "type": "function",
         "z": "526b95cf1094716a",
         "name": "Scrape",
-        "func": "const { JSDOM } = jsdom;\nconst html = msg.payload;\nconst dom = new JSDOM(`${html}`);\n\ndom.window.document.querySelectorAll('style').forEach(link => {\n    link.remove();\n});\ndom.window.document.querySelectorAll('script').forEach(link => {\n    link.remove();\n});\n\nconst document = dom.window.document;\nconst pageText = document.body.textContent;\n\nmsg.text = pageText;\n\nlet table = dom.window.document.querySelector('table');\nlet ckeckTable = table?.textContent ? true : false;\n\nif (ckeckTable) {\n    const headers = Array.from(table.querySelectorAll('tr:first-child th, tr:first-child td')).map(td => {\n        const text = td.textContent.trim();\n        return text !== \"\" ? text : undefined;\n    }).filter(Boolean);\n\n    const rows = Array.from(table.querySelectorAll('tr:not(:first-child)'));\n    const tableData = rows.map(row => {\n        const rowData = Array.from(row.querySelectorAll('td')).map(td => td.textContent.trim());\n        return Object.fromEntries(headers.map((header, index) => [header, rowData[index]]));\n    });\n\n    // let tables = JSON.stringify(tableData);\n    // node.warn(tables)\n    // msg.pageContent = pageText + '\\n\\n' + tables;\n} else {\n     msg.pageContent = pageText;\n}\n\nconst MAX_LENGTH = 500;\n\nmsg.result = [];\nlet currentParagraph = '';\n\nconst sentences = msg.pageContent.replace(/\\s+/g, ' ').split(/([.?!])+/).filter(sentence => sentence.trim() !== '');\n\nfor (const sentence of sentences) {\n    if (currentParagraph.length + sentence.length <= MAX_LENGTH) {\n        currentParagraph += sentence;\n    } else {\n        msg.result.push(currentParagraph.trim());\n        currentParagraph = sentence;\n    }\n}\n\nif (currentParagraph.trim() !== '') {\n    msg.result.push(currentParagraph.trim());\n}\n\nmsg.payload = {\n    ...msg.old,\n    text: msg.result,\n}\n\nmsg.url = env.get(\"nodered\") + `/createVector`;\n\nreturn msg;\n",
+        "func": "const { JSDOM } = jsdom;\nconst html = msg.payload;\nconst dom = new JSDOM(`${html}`);\n\ndom.window.document.querySelectorAll('style').forEach(link => {\n    link.remove();\n});\ndom.window.document.querySelectorAll('script').forEach(link => {\n    link.remove();\n});\n\nconst document = dom.window.document;\nconst pageText = document.body.textContent;\n\nmsg.text = pageText;\n\nlet table = dom.window.document.querySelector('table');\nlet ckeckTable = table?.textContent ? true : false;\n\nif (ckeckTable) {\n    const headers = Array.from(table.querySelectorAll('tr:first-child th, tr:first-child td')).map(td => {\n        const text = td.textContent.trim();\n        return text !== \"\" ? text : undefined;\n    }).filter(Boolean);\n\n    const rows = Array.from(table.querySelectorAll('tr:not(:first-child)'));\n    const tableData = rows.map(row => {\n        const rowData = Array.from(row.querySelectorAll('td')).map(td => td.textContent.trim());\n        return Object.fromEntries(headers.map((header, index) => [header, rowData[index]]));\n    });\n\n    // let tables = JSON.stringify(tableData);\n    // node.warn(tables)\n    // msg.pageContent = pageText + '\\n\\n' + tables;\n} else {\n     msg.pageContent = pageText;\n}\n\nconst MAX_LENGTH = 500;\n\nmsg.result = [];\nlet currentParagraph = '';\n\nconst sentences = msg.pageContent.replace(/\\s+/g, ' ').split(/([.?!])+/).filter(sentence => sentence.trim() !== '');\n\nfor (const sentence of sentences) {\n    if (currentParagraph.length + sentence.length <= MAX_LENGTH) {\n        currentParagraph += sentence;\n    } else {\n        msg.result.push(currentParagraph.trim());\n        currentParagraph = sentence;\n    }\n}\n\nif (currentParagraph.trim() !== '') {\n    msg.result.push(currentParagraph.trim());\n}\n\n// msg.payload = {\n//     ...msg.old,\n//     text: msg.result,\n// }\n\nmsg.payload = msg.result;\n\n// msg.url = env.get(\"nodered\") + `/createVector`;\n\nreturn msg;\n",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
@@ -152,39 +148,17 @@
                 "module": "jsdom"
             }
         ],
-        "x": 640,
-        "y": 220,
+        "x": 620,
+        "y": 160,
         "wires": [
             [
-                "4fdb0b65fc9b38af",
-                "caf650b921c5d429"
+                "caf650b921c5d429",
+                "d445fdab5ef58420"
             ]
         ]
     },
     {
-        "id": "4fdb0b65fc9b38af",
-        "type": "http request",
-        "z": "526b95cf1094716a",
-        "name": "",
-        "method": "POST",
-        "ret": "obj",
-        "paytoqs": "ignore",
-        "url": "",
-        "tls": "",
-        "persist": false,
-        "proxy": "",
-        "insecureHTTPParser": false,
-        "authType": "",
-        "senderr": false,
-        "headers": [],
-        "x": 810,
-        "y": 220,
-        "wires": [
-            []
-        ]
-    },
-    {
-        "id": "7c3a18085d0b1d8a",
+        "id": "caf650b921c5d429",
         "type": "debug",
         "z": "526b95cf1094716a",
         "name": "debug 1",
@@ -196,59 +170,8 @@
         "targetType": "full",
         "statusVal": "",
         "statusType": "auto",
-        "x": 140,
-        "y": 260,
-        "wires": []
-    },
-    {
-        "id": "2a5e1fb1c835c9c9",
-        "type": "debug",
-        "z": "526b95cf1094716a",
-        "name": "debug 2",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "true",
-        "targetType": "full",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 320,
-        "y": 260,
-        "wires": []
-    },
-    {
-        "id": "12e6cd0f8ab66e26",
-        "type": "debug",
-        "z": "526b95cf1094716a",
-        "name": "debug 3",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "true",
-        "targetType": "full",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 500,
-        "y": 260,
-        "wires": []
-    },
-    {
-        "id": "caf650b921c5d429",
-        "type": "debug",
-        "z": "526b95cf1094716a",
-        "name": "debug 4",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "true",
-        "targetType": "full",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 660,
-        "y": 260,
+        "x": 640,
+        "y": 200,
         "wires": []
     }
 ]

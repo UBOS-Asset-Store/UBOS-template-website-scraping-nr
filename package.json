@@ -2,7 +2,9 @@
     "name": "test",
     "description": "tsetse",
     "version": "0.0.1",
-    "dependencies": {},
+    "dependencies": {
+        "jsdom": "22.1.0"
+    },
     "node-red": {
         "settings": {
             "flowFile": "flows.json",
